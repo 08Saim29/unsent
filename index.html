@@ -164,18 +164,20 @@ function add(t,cls){const d=document.createElement('div');d.className='b '+cls;d
 function buzz(){if(S.vib&&navigator.vibrate)navigator.vibrate(cur==='mad'?[25,15,25]:10)}
 
 async function ask(mode,draft){
-  if(API.includes('PASTE')){add('Worker URL is not set. Open index.html and replace https://unsent-backend-ten.vercel.app/api/chat with your backend link.','ai');return}
-  busy=true;stat.textContent='typing...';
+  busy=true;stat.textContent='typing...';typing(true);
+  let n=0,buf='';
+  const show=async m=>{if(n){typing(true);await sleep(120+m.length*4)}typing(false);add(m,'ai');buzz();hist.push({role:'ai',text:m});n++};
+  const line=async l=>{l=l.trim();if(!l||l.startsWith('debug:'))return;if(l.startsWith('mood:')){mood(l.slice(5).trim());return}if(n<4)await show(l)};
   try{
-    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,history:hist.slice(-20),draft:draft||'',n:nudges,name:S.name})});
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,history:hist.slice(-12),draft:draft||'',n:nudges,name:S.name})});
     if(!r.ok)throw new Error('http '+r.status);
-    const j=await r.json();mood(j.mood);
-    for(const m of (j.msgs||[]).slice(0,4)){
-      typing(true);await sleep(350+m.length*20);typing(false);
-      add(m,'ai');buzz();hist.push({role:'ai',text:m});await sleep(150);
-    }
+    if(r.body&&r.body.getReader){
+      const rd=r.body.getReader(),dc=new TextDecoder();
+      for(;;){const {done,value}=await rd.read();if(done)break;buf+=dc.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){const l=buf.slice(0,i);buf=buf.slice(i+1);await line(l)}}
+      await line(buf);
+    }else{for(const l of (await r.text()).split('\n'))await line(l)}
   }catch(e){typing(false);add('Cannot reach the server ('+e.message+'). Check that your backend is deployed and the URL is right.','ai')}
-  busy=false;stat.textContent='online';
+  typing(false);busy=false;stat.textContent='online';
   if(again){again=false;ask('reply')}else armIdle();
 }
 function armIdle(){
