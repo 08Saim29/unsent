@@ -49,6 +49,7 @@ body.crazy h1{animation:gl 4s infinite}
 .sig i:nth-child(1){height:35%}.sig i:nth-child(2){height:60%}.sig i:nth-child(3){height:80%}
 body.crazy .sig i{animation:wv .9s infinite}
 body.crazy .sig i:nth-child(2){animation-delay:.2s}body.crazy .sig i:nth-child(3){animation-delay:.4s}
+#spk{width:34px;height:34px;background:#ffffff10;box-shadow:inset 0 0 0 1px var(--m);font-size:15px;color:#fff;clip-path:polygon(25% 0,100% 0,100% 75%,75% 100%,0 100%,0 25%)}
 #menu{width:34px;height:34px;background:#ffffff10;box-shadow:inset 0 0 0 1px var(--m);font-size:16px;color:#fff;clip-path:polygon(25% 0,100% 0,100% 75%,75% 100%,0 100%,0 25%)}
 #feed{position:relative;flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:6px;overscroll-behavior:contain}
 .b{max-width:80%;padding:7px 14px;word-wrap:break-word}
@@ -83,6 +84,8 @@ body.open #dr{transform:none}body.open #sc{opacity:1;pointer-events:auto}
 .row input[type=checkbox]:checked{background:var(--m)}
 .row input[type=checkbox]:checked:after{transform:translateX(16px)}
 .row input[type=range]{width:90px;accent-color:var(--m)}
+.row select{max-width:120px;background:#14101d;border:1px solid #ffffff25;color:#fff;padding:5px;font:inherit;font-size:12px}
+.mini{font-size:10px;color:var(--m2);margin-top:4px;min-height:12px}
 .clr{margin-top:14px;width:100%;padding:9px;background:#ffffff10;box-shadow:inset 0 0 0 1px var(--m);color:#fff;font:700 11px var(--mono);letter-spacing:2px;text-transform:uppercase}
 .about{margin-top:12px;font-size:10px;opacity:.5}
 #boot{position:fixed;inset:0;z-index:100;background:#05040a;display:flex;align-items:center;justify-content:center;transition:opacity .4s}
@@ -102,6 +105,10 @@ body.open #dr{transform:none}body.open #sc{opacity:1;pointer-events:auto}
   <div class="row"><span>Crazy mode<small>neon, particles. Off if laggy</small></span><input type="checkbox" id="s-crazy"></div>
   <div class="row"><span>Shake effect<small>when Nyx is angry</small></span><input type="checkbox" id="s-fx"></div>
   <div class="row"><span>Vibration<small>on new messages</small></span><input type="checkbox" id="s-vib"></div>
+  <div class="row"><span>Nyx voice<small>reads messages aloud</small></span><input type="checkbox" id="s-tts"></div>
+  <div class="row"><span>Voice language<small>Auto reads the script</small></span><select id="s-lang"></select></div>
+  <div class="row"><span>Voice speed: <b id="rv">1</b>x</span><input type="range" id="s-rate" min="0.7" max="1.4" step="0.1"></div>
+  <div class="row"><span>Test voice<div class="mini" id="vn"></div></span><button class="clr" id="tv" style="margin:0;width:auto;padding:6px 12px">Play</button></div>
   <button class="clr" id="clr">Clear chat</button>
   <div class="about">Nyx is an AI. When Notice deleted messages is on, it can see text you type and delete in this chat box.</div>
 </aside>
@@ -110,6 +117,7 @@ body.open #dr{transform:none}body.open #sc{opacity:1;pointer-events:auto}
     <div class="gw"><div class="orb"><div class="globe"></div></div><div id="lab">calm</div><div class="mb"><i id="mbi"></i></div></div>
     <div><h1>UNSENT</h1><div id="stat">online</div></div>
     <div class="sig"><i></i><i></i><i></i></div>
+    <button id="spk" aria-label="Voice on or off">&#128263;</button>
     <button id="menu" aria-label="Settings">&#9776;</button>
   </header>
   <div id="feed"></div>
@@ -121,7 +129,7 @@ const $=s=>document.querySelector(s);
 const feed=$('#feed'),inp=$('#inp'),stat=$('#stat'),B=document.body;
 const MOOD={chill:['#9d6bff','calm','#22d3ee','✦',30],happy:['#22d3ee','happy','#a3e635','✨',70],mad:['#ff2a3d','anger','#ff8a00','🔥',95],sad:['#4d7cff','sadness','#7dd3fc','💧',55],love:['#ff4fd8','love','#ff9a9e','💖',85],shock:['#ffd60a','shock','#ff2a3d','⚡',90],smug:['#2ee6a0','smug','#9d6bff','😏',60]};
 const lowEnd=(navigator.deviceMemory&&navigator.deviceMemory<=2)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2);
-const D={name:'',delay:20,drafts:true,fx:false,crazy:!lowEnd,vib:true};
+const D={name:'',delay:20,drafts:true,fx:false,crazy:!lowEnd,vib:true,tts:false,lang:'auto',rate:1};
 let S={...D};try{S={...D,...JSON.parse(localStorage.getItem('unsent')||'{}')}}catch(e){}
 const save=()=>{try{localStorage.setItem('unsent',JSON.stringify(S))}catch(e){}};
 let hist=[],busy=false,again=false,idleT,nudges=0,peak='',cur='chill';
@@ -135,8 +143,43 @@ $('#s-drafts').onchange=e=>{S.drafts=e.target.checked;save()};
 $('#s-fx').onchange=e=>{S.fx=e.target.checked;save()};
 $('#s-vib').onchange=e=>{S.vib=e.target.checked;save()};
 $('#s-crazy').onchange=e=>{S.crazy=e.target.checked;save();applyS()};
+// ---------- text to speech ----------
+const TTSL={auto:['Auto-detect','','hey, this is Nyx'],en:['English','en-US','hey, this is Nyx'],ur:['Urdu','ur-PK','ہیلو، میں نکس ہوں'],hi:['Hindi','hi-IN','हे, मैं निक्स हूँ'],ar:['Arabic','ar-SA','مرحبا، أنا نيكس'],ko:['Korean','ko-KR','안녕, 나는 닉스야'],ja:['Japanese','ja-JP','やあ、ニックスだよ'],es:['Spanish','es-ES','hola, soy Nyx'],fr:['French','fr-FR','salut, je suis Nyx']};
+const TTS='speechSynthesis' in window;let voices=[];
+const nl=l=>(l||'').replace('_','-');
+if(TTS){const lv=()=>{voices=speechSynthesis.getVoices();vnote()};lv();speechSynthesis.onvoiceschanged=lv}
+function detect(t){
+  if(/[\u0600-\u06FF]/.test(t))return /[ٹڈڑںےگچپژکھ]/.test(t)?'ur':'ar';
+  if(/[\u0900-\u097F]/.test(t))return 'hi';
+  if(/[\uAC00-\uD7AF]/.test(t))return 'ko';
+  if(/[\u3040-\u30FF\u4E00-\u9FFF]/.test(t))return 'ja';
+  return 'en';
+}
+function findVoice(code){return voices.find(v=>nl(v.lang)===code)||voices.find(v=>nl(v.lang).slice(0,2)===code.slice(0,2))}
+function vnote(){
+  const k=S.lang,el=$('#vn');if(!el)return;
+  if(!TTS){el.textContent='This browser has no voice support';return}
+  el.textContent=(k!=='auto'&&voices.length&&!findVoice(TTSL[k][1]))?'No '+TTSL[k][0]+' voice on this phone. Add it in phone Settings > Text-to-speech':'';
+}
+function stopSpeak(){if(TTS)speechSynthesis.cancel()}
+function speak(t,force){
+  if(!TTS||(!S.tts&&!force))return;
+  t=t.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu,'').trim();if(!t)return;
+  const k=S.lang==='auto'?detect(t):S.lang,code=TTSL[k][1],u=new SpeechSynthesisUtterance(t);
+  u.lang=code;const v=findVoice(code);if(v)u.voice=v;
+  const P={mad:[1.15,1.2],sad:[.85,.8],love:[1,1.3],happy:[1.1,1.15],shock:[1.2,1.4],smug:[.95,.9]}[cur]||[1,1];
+  u.rate=S.rate*P[0];u.pitch=P[1];speechSynthesis.speak(u);
+}
+const sel=$('#s-lang');for(const k in TTSL){const o=document.createElement('option');o.value=k;o.textContent=TTSL[k][0];sel.appendChild(o)}
+function syncTts(){$('#s-tts').checked=S.tts;$('#spk').innerHTML=S.tts?'&#128266;':'&#128263;'}
+sel.value=S.lang;$('#s-rate').value=S.rate;$('#rv').textContent=S.rate;syncTts();vnote();
+$('#s-tts').onchange=e=>{S.tts=e.target.checked;save();syncTts();if(!S.tts)stopSpeak()};
+$('#spk').onclick=()=>{S.tts=!S.tts;save();syncTts();if(S.tts)speak('voice on',1);else stopSpeak()};
+sel.onchange=e=>{S.lang=e.target.value;save();vnote()};
+$('#s-rate').oninput=e=>{S.rate=+e.target.value;$('#rv').textContent=S.rate;save()};
+$('#tv').onclick=()=>{stopSpeak();const k=S.lang==='auto'?'en':S.lang;const code=TTSL[k][1],u=new SpeechSynthesisUtterance(TTSL[k][2]);u.lang=code;const v=findVoice(code);if(v)u.voice=v;u.rate=S.rate;if(TTS)speechSynthesis.speak(u)};
 const setOpen=o=>B.classList.toggle('open',o);
-$('#clr').onclick=()=>{feed.textContent='';hist=[];nudges=0;peak='';setOpen(false);if(!busy)ask('hello')};
+$('#clr').onclick=()=>{stopSpeak();feed.textContent='';hist=[];nudges=0;peak='';setOpen(false);if(!busy)ask('hello')};
 $('#menu').onclick=()=>setOpen(true);$('#sc').onclick=()=>setOpen(false);
 let tx=0,ty=0;
 addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
@@ -166,7 +209,7 @@ function buzz(){if(S.vib&&navigator.vibrate)navigator.vibrate(cur==='mad'?[25,15
 async function ask(mode,draft){
   busy=true;stat.textContent='typing...';typing(true);
   let n=0,buf='';
-  const show=async m=>{if(n){typing(true);await sleep(120+m.length*4)}typing(false);add(m,'ai');buzz();hist.push({role:'ai',text:m});n++};
+  const show=async m=>{if(n){typing(true);await sleep(120+m.length*4)}typing(false);add(m,'ai');buzz();speak(m);hist.push({role:'ai',text:m});n++};
   const line=async l=>{l=l.trim();if(!l||l.startsWith('debug:'))return;if(l.startsWith('mood:')){mood(l.slice(5).trim());return}if(n<4)await show(l)};
   try{
     const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,history:hist.slice(-12),draft:draft||'',n:nudges,name:S.name})});
@@ -187,7 +230,7 @@ function armIdle(){
 $('#f').addEventListener('submit',e=>{
   e.preventDefault();const t=inp.value.trim();if(!t)return;
   inp.value='';peak='';nudges=0;clearTimeout(idleT);
-  add(t,'me');hist.push({role:'user',text:t});burst($('#send'),'✦',4);
+  stopSpeak();add(t,'me');hist.push({role:'user',text:t});burst($('#send'),'✦',4);
   if(busy)again=true;else ask('reply');
 });
 inp.addEventListener('input',()=>{
