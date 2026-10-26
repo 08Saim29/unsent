@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>UNSENT</title>
+<style>
+:root{--m:#9d6bff;--m2:#22d3ee;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:#05040a;color:#e6f4ff;font:14px/1.35 system-ui,-apple-system,Roboto,sans-serif;display:flex;justify-content:center;overflow:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(#ffffff09 1px,transparent 1px),linear-gradient(90deg,#ffffff09 1px,transparent 1px);background-size:26px 26px}
+.blob{position:fixed;width:120vmax;height:120vmax;border-radius:50%;pointer-events:none;display:none;opacity:.17}
+.blob.a{left:-60vmax;top:-70vmax;background:radial-gradient(circle,var(--m),transparent 62%);animation:fa 16s ease-in-out infinite alternate}
+.blob.b{right:-65vmax;bottom:-75vmax;background:radial-gradient(circle,var(--m2),transparent 62%);animation:fb 20s ease-in-out infinite alternate}
+@keyframes fa{to{transform:translate(16vmax,12vmax)}}
+@keyframes fb{to{transform:translate(-14vmax,-10vmax)}}
+.scl{position:fixed;left:0;right:0;top:0;height:110px;pointer-events:none;display:none;background:linear-gradient(transparent,var(--m),transparent);opacity:.07;animation:sc 7s linear infinite}
+@keyframes sc{from{transform:translateY(-120px)}to{transform:translateY(100vh)}}
+body.crazy .blob,body.crazy .scl{display:block}
+body.shake #app{animation:sh .08s 5}
+@keyframes sh{50%{transform:translateX(5px)}}
+#app{position:relative;width:100%;max-width:480px;height:100%;display:flex;flex-direction:column}
+header{position:relative;padding:calc(8px + env(safe-area-inset-top,0px)) 11px 10px;display:flex;align-items:center;gap:11px;background:linear-gradient(#0d0a17,#07050e)}
+header:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--m),var(--m2),var(--m),transparent);background-size:200% 100%}
+body.crazy header:after{animation:bar 3s linear infinite}
+@keyframes bar{to{background-position:200% 0}}
+.gw{display:flex;flex-direction:column;align-items:center;width:56px}
+.orb{position:relative;width:46px;height:46px}
+.orb:before,.orb:after{content:"";position:absolute;inset:0;border-radius:50%;border:1.5px solid transparent}
+.orb:before{border-top-color:var(--m);border-bottom-color:var(--m2)}
+.orb:after{inset:4px;border:1px dashed var(--m)}
+body.crazy .orb:before{animation:spin 2.2s linear infinite}
+body.crazy .orb:after{animation:spin 4s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.globe{position:absolute;inset:9px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fffa 0,#fff0 25%),radial-gradient(circle,var(--m) 30%,var(--m2) 150%);box-shadow:0 0 14px var(--m)}
+body.crazy .globe{animation:pl 2s ease-in-out infinite}
+@keyframes pl{50%{transform:scale(1.14)}}
+#lab{font:700 10px var(--mono);margin-top:3px;color:var(--m);text-transform:uppercase;letter-spacing:1px}
+.mb{width:42px;height:3px;background:#ffffff1c;margin-top:3px}
+.mb i{display:block;height:100%;width:30%;background:linear-gradient(90deg,var(--m),var(--m2));transition:width .5s}
+h1{font-size:19px;font-weight:900;letter-spacing:4px;background:linear-gradient(90deg,#fff,var(--m),var(--m2));-webkit-background-clip:text;background-clip:text;color:transparent}
+body.crazy h1{animation:gl 4s infinite}
+@keyframes gl{0%,92%,100%{transform:none}94%{transform:translateX(-3px) skewX(-8deg)}97%{transform:translateX(3px)}}
+#stat{font:10px var(--mono);letter-spacing:1.5px;color:var(--m2);text-transform:uppercase;opacity:.85}
+#stat:before{content:"// ";opacity:.6}
+.sig{display:flex;gap:2px;align-items:flex-end;height:16px;margin-left:auto}
+.sig i{width:3px;background:var(--m);height:100%;transform-origin:bottom}
+.sig i:nth-child(1){height:35%}.sig i:nth-child(2){height:60%}.sig i:nth-child(3){height:80%}
+body.crazy .sig i{animation:wv .9s infinite}
+body.crazy .sig i:nth-child(2){animation-delay:.2s}body.crazy .sig i:nth-child(3){animation-delay:.4s}
+#menu{width:34px;height:34px;background:#ffffff10;box-shadow:inset 0 0 0 1px var(--m);font-size:16px;color:#fff;clip-path:polygon(25% 0,100% 0,100% 75%,75% 100%,0 100%,0 25%)}
+#feed{position:relative;flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:6px;overscroll-behavior:contain}
+.b{max-width:80%;padding:7px 14px;word-wrap:break-word}
+.ai{align-self:flex-start;background:linear-gradient(135deg,#ffffff14,#ffffff05);box-shadow:inset 2px 0 0 var(--m),inset 0 0 0 1px #ffffff12;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));animation:pop .3s cubic-bezier(.2,1.5,.4,1)}
+.me{align-self:flex-end;background:linear-gradient(135deg,var(--m),var(--m2));color:#04030a;font-weight:600;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);animation:pop .25s cubic-bezier(.2,1.5,.4,1)}
+@keyframes pop{from{transform:scale(.7);opacity:0}}
+.ghost{align-self:flex-end;border:1px dashed var(--m);color:var(--m);text-decoration:line-through;font-family:var(--mono);animation:gh 2.5s ease-out forwards}
+@keyframes gh{to{opacity:0;transform:translateY(-40px) rotate(4deg)}}
+.ty{display:flex;gap:4px;padding:11px 14px;align-items:flex-end;height:32px}
+.ty i{width:4px;height:6px;background:var(--m);animation:wv .8s infinite}
+.ty i:nth-child(2){animation-delay:.12s;background:var(--m2)}.ty i:nth-child(3){animation-delay:.24s}.ty i:nth-child(4){animation-delay:.36s;background:var(--m2)}
+@keyframes wv{50%{transform:scaleY(2.4)}}
+.pt{position:fixed;z-index:30;pointer-events:none;font-size:15px;animation:fly 1.1s ease-out forwards}
+@keyframes fly{from{transform:translate(0,0) scale(.5);opacity:1}to{transform:translate(var(--x),var(--y)) scale(1.3) rotate(40deg);opacity:0}}
+form{position:relative;display:flex;gap:8px;align-items:center;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:#07050e;border-top:1px solid #ffffff14}
+.pr{position:absolute;left:22px;font:700 14px var(--mono);color:var(--m);pointer-events:none}
+#inp{flex:1;min-width:0;background:#ffffff0b;box-shadow:inset 0 0 0 1px #ffffff25;border:0;padding:10px 12px 10px 28px;color:#fff;font:inherit;font-size:15px;outline:none;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+#inp:focus{box-shadow:inset 0 0 0 1px var(--m)}
+button{border:0;cursor:pointer;font:inherit}
+#send{width:42px;height:38px;background:linear-gradient(135deg,var(--m),var(--m2));color:#000;font-size:15px;font-weight:700;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+#send:active{transform:scale(.85)}
+#sc{position:fixed;inset:0;background:#000c;z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+#dr{position:fixed;top:0;bottom:0;left:0;width:min(280px,84%);background:#0a0714;border-right:1px solid var(--m);z-index:41;transform:translateX(-102%);transition:transform .2s;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;overflow-y:auto}
+body.open #dr{transform:none}body.open #sc{opacity:1;pointer-events:auto}
+#dr h2{font:700 13px var(--mono);letter-spacing:3px;color:var(--m)}
+.sub{font:10px var(--mono);opacity:.5;margin:2px 0 10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #ffffff12;font-size:13px}
+.row small{display:block;opacity:.5;font-size:10px}
+.row input[type=text]{width:100px;background:#ffffff10;border:1px solid #ffffff25;padding:5px 8px;color:#fff;font:inherit}
+.row input[type=checkbox]{-webkit-appearance:none;appearance:none;flex:none;width:34px;height:18px;border-radius:9px;background:#ffffff22;position:relative}
+.row input[type=checkbox]:after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
+.row input[type=checkbox]:checked{background:var(--m)}
+.row input[type=checkbox]:checked:after{transform:translateX(16px)}
+.row input[type=range]{width:90px;accent-color:var(--m)}
+.clr{margin-top:14px;width:100%;padding:9px;background:#ffffff10;box-shadow:inset 0 0 0 1px var(--m);color:#fff;font:700 11px var(--mono);letter-spacing:2px;text-transform:uppercase}
+.about{margin-top:12px;font-size:10px;opacity:.5}
+#boot{position:fixed;inset:0;z-index:100;background:#05040a;display:flex;align-items:center;justify-content:center;transition:opacity .4s}
+#bt{font:12px/1.8 var(--mono);color:#22d3ee;white-space:pre-wrap;padding:20px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="blob a"></div><div class="blob b"></div><div class="scl"></div>
+<div id="boot"><div id="bt"></div></div>
+<div id="sc"></div>
+<aside id="dr">
+  <h2>SYSTEM</h2><div class="sub">swipe left to close</div>
+  <div class="row"><span>Your name<small>what Nyx calls you</small></span><input type="text" id="s-name" maxlength="20" placeholder="name"></div>
+  <div class="row"><span>Wait: <b id="dv">20</b>s<small>before Nyx texts</small></span><input type="range" id="s-delay" min="10" max="60" step="5"></div>
+  <div class="row"><span>Notice deleted messages<small>Nyx asks why I cut them</small></span><input type="checkbox" id="s-drafts"></div>
+  <div class="row"><span>Crazy mode<small>neon, particles. Off if laggy</small></span><input type="checkbox" id="s-crazy"></div>
+  <div class="row"><span>Shake effect<small>when Nyx is angry</small></span><input type="checkbox" id="s-fx"></div>
+  <div class="row"><span>Vibration<small>on new messages</small></span><input type="checkbox" id="s-vib"></div>
+  <button class="clr" id="clr">Clear chat</button>
+  <div class="about">Nyx is an AI. When Notice deleted messages is on, it can see text you type and delete in this chat box.</div>
+</aside>
+<div id="app">
+  <header>
+    <div class="gw"><div class="orb"><div class="globe"></div></div><div id="lab">calm</div><div class="mb"><i id="mbi"></i></div></div>
+    <div><h1>UNSENT</h1><div id="stat">online</div></div>
+    <div class="sig"><i></i><i></i><i></i></div>
+    <button id="menu" aria-label="Settings">&#9776;</button>
+  </header>
+  <div id="feed"></div>
+  <form id="f"><span class="pr">&gt;</span><input id="inp" placeholder="type a message" autocomplete="off" enterkeyhint="send"><button id="send" type="submit" aria-label="Send">&#10148;</button></form>
+</div>
+<script>
+const API="https://unsent-backend-ten.vercel.app/api/chat";
+const $=s=>document.querySelector(s);
+const feed=$('#feed'),inp=$('#inp'),stat=$('#stat'),B=document.body;
+const MOOD={chill:['#9d6bff','calm','#22d3ee','✦',30],happy:['#22d3ee','happy','#a3e635','✨',70],mad:['#ff2a3d','anger','#ff8a00','🔥',95],sad:['#4d7cff','sadness','#7dd3fc','💧',55],love:['#ff4fd8','love','#ff9a9e','💖',85],shock:['#ffd60a','shock','#ff2a3d','⚡',90],smug:['#2ee6a0','smug','#9d6bff','😏',60]};
+const lowEnd=(navigator.deviceMemory&&navigator.deviceMemory<=2)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2);
+const D={name:'',delay:20,drafts:true,fx:false,crazy:!lowEnd,vib:true};
+let S={...D};try{S={...D,...JSON.parse(localStorage.getItem('unsent')||'{}')}}catch(e){}
+const save=()=>{try{localStorage.setItem('unsent',JSON.stringify(S))}catch(e){}};
+let hist=[],busy=false,again=false,idleT,nudges=0,peak='',cur='chill';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function applyS(){B.classList.toggle('crazy',S.crazy)}
+$('#s-name').value=S.name;$('#s-delay').value=S.delay;$('#dv').textContent=S.delay;$('#s-drafts').checked=S.drafts;$('#s-fx').checked=S.fx;$('#s-crazy').checked=S.crazy;$('#s-vib').checked=S.vib;applyS();
+$('#s-name').oninput=e=>{S.name=e.target.value.trim();save()};
+$('#s-delay').oninput=e=>{S.delay=+e.target.value;$('#dv').textContent=S.delay;save();armIdle()};
+$('#s-drafts').onchange=e=>{S.drafts=e.target.checked;save()};
+$('#s-fx').onchange=e=>{S.fx=e.target.checked;save()};
+$('#s-vib').onchange=e=>{S.vib=e.target.checked;save()};
+$('#s-crazy').onchange=e=>{S.crazy=e.target.checked;save();applyS()};
+const setOpen=o=>B.classList.toggle('open',o);
+$('#clr').onclick=()=>{feed.textContent='';hist=[];nudges=0;peak='';setOpen(false);if(!busy)ask('hello')};
+$('#menu').onclick=()=>setOpen(true);$('#sc').onclick=()=>setOpen(false);
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-tx;if(Math.abs(t.clientY-ty)<60){if(dx>80)setOpen(true);else if(dx<-80)setOpen(false)}},{passive:true});
+
+function burst(el,ch,n){
+  if(!S.crazy)return;
+  const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+  for(let i=0;i<n;i++){
+    const p=document.createElement('span');p.className='pt';p.textContent=ch;
+    p.style.left=x+'px';p.style.top=y+'px';
+    p.style.setProperty('--x',(Math.random()*160-80)+'px');p.style.setProperty('--y',(Math.random()*120+10)+'px');
+    p.onanimationend=()=>p.remove();document.body.appendChild(p);
+  }
+}
+function mood(m){
+  const x=MOOD[m];if(!x)return;cur=m;
+  const st=document.documentElement.style;st.setProperty('--m',x[0]);st.setProperty('--m2',x[2]);$('#lab').textContent=x[1];$('#mbi').style.width=x[4]+'%';
+  burst($('.orb'),x[3],m==='chill'?3:7);
+  if(m==='mad'&&S.fx){B.classList.add('shake');setTimeout(()=>B.classList.remove('shake'),450)}
+}
+const down=()=>{feed.scrollTop=feed.scrollHeight};
+function typing(on){let t=$('#ty');if(on&&!t){t=document.createElement('div');t.id='ty';t.className='b ai ty';t.innerHTML='<i></i><i></i><i></i><i></i>';feed.appendChild(t);down()}else if(!on&&t)t.remove()}
+function add(t,cls){const d=document.createElement('div');d.className='b '+cls;d.textContent=t;feed.appendChild(d);while(feed.children.length>60)feed.firstChild.remove();down()}
+function buzz(){if(S.vib&&navigator.vibrate)navigator.vibrate(cur==='mad'?[25,15,25]:10)}
+
+async function ask(mode,draft){
+  busy=true;stat.textContent='typing...';typing(true);
+  let n=0,buf='';
+  const show=async m=>{if(n){typing(true);await sleep(120+m.length*4)}typing(false);add(m,'ai');buzz();hist.push({role:'ai',text:m});n++};
+  const line=async l=>{l=l.trim();if(!l||l.startsWith('debug:'))return;if(l.startsWith('mood:')){mood(l.slice(5).trim());return}if(n<4)await show(l)};
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,history:hist.slice(-12),draft:draft||'',n:nudges,name:S.name})});
+    if(!r.ok)throw new Error('http '+r.status);
+    if(r.body&&r.body.getReader){
+      const rd=r.body.getReader(),dc=new TextDecoder();
+      for(;;){const {done,value}=await rd.read();if(done)break;buf+=dc.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){const l=buf.slice(0,i);buf=buf.slice(i+1);await line(l)}}
+      await line(buf);
+    }else{for(const l of (await r.text()).split('\n'))await line(l)}
+  }catch(e){typing(false);add('Cannot reach the server ('+e.message+'). Check that your backend is deployed and the URL is right.','ai')}
+  typing(false);busy=false;stat.textContent='online';
+  if(again){again=false;ask('reply')}else armIdle();
+}
+function armIdle(){
+  clearTimeout(idleT);if(nudges>=3||API.includes('PASTE'))return;
+  idleT=setTimeout(()=>{if(busy||inp.value)return armIdle();nudges++;ask('nudge')},S.delay*1000);
+}
+$('#f').addEventListener('submit',e=>{
+  e.preventDefault();const t=inp.value.trim();if(!t)return;
+  inp.value='';peak='';nudges=0;clearTimeout(idleT);
+  add(t,'me');hist.push({role:'user',text:t});burst($('#send'),'✦',4);
+  if(busy)again=true;else ask('reply');
+});
+inp.addEventListener('input',()=>{
+  clearTimeout(idleT);const v=inp.value;
+  if(v.length>peak.length)peak=v;
+  if(v.length===0){
+    const d=peak.trim();peak='';
+    if(d.length>=6&&S.drafts){
+      add(d,'ghost');
+      setTimeout(()=>{if(inp.value||busy)return;hist.push({role:'event',text:'user typed then deleted: "'+d+'"'});ask('draft',d)},2500);
+    }
+  }
+});
+async function boot(){
+  const L=['> UNSENT // NYX LINK','> scanning emotion core... ok','> link established'],bt=$('#bt');
+  for(const l of L){bt.textContent+=l+'\n';await sleep(260)}
+  const b=$('#boot');b.style.opacity=0;await sleep(400);b.remove();ask('hello');
+}
+boot();
+</script>
+</body>
+</html>
