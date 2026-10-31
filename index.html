@@ -106,6 +106,8 @@ body.open #dr{transform:none}body.open #sc{opacity:1;pointer-events:auto}
   <div class="row"><span>Shake effect<small>when Nyx is angry</small></span><input type="checkbox" id="s-fx"></div>
   <div class="row"><span>Vibration<small>on new messages</small></span><input type="checkbox" id="s-vib"></div>
   <div class="row"><span>Nyx voice<small>reads messages aloud</small></span><input type="checkbox" id="s-tts"></div>
+  <div class="row"><span>Natural voice (HD)<small>sounds human, ~1-2s delay</small></span><input type="checkbox" id="s-hd"></div>
+  <div class="row"><span>HD voice style</span><select id="s-vn"></select></div>
   <div class="row"><span>Voice language<small>Auto reads the script</small></span><select id="s-lang"></select></div>
   <div class="row"><span>Voice speed: <b id="rv">1</b>x</span><input type="range" id="s-rate" min="0.7" max="1.4" step="0.1"></div>
   <div class="row"><span>Test voice<div class="mini" id="vn"></div></span><button class="clr" id="tv" style="margin:0;width:auto;padding:6px 12px">Play</button></div>
@@ -129,7 +131,7 @@ const $=s=>document.querySelector(s);
 const feed=$('#feed'),inp=$('#inp'),stat=$('#stat'),B=document.body;
 const MOOD={chill:['#9d6bff','calm','#22d3ee','✦',30],happy:['#22d3ee','happy','#a3e635','✨',70],mad:['#ff2a3d','anger','#ff8a00','🔥',95],sad:['#4d7cff','sadness','#7dd3fc','💧',55],love:['#ff4fd8','love','#ff9a9e','💖',85],shock:['#ffd60a','shock','#ff2a3d','⚡',90],smug:['#2ee6a0','smug','#9d6bff','😏',60]};
 const lowEnd=(navigator.deviceMemory&&navigator.deviceMemory<=2)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2);
-const D={name:'',delay:20,drafts:true,fx:false,crazy:!lowEnd,vib:true,tts:false,lang:'auto',rate:1};
+const D={name:'',delay:20,drafts:true,fx:false,crazy:!lowEnd,vib:true,tts:false,lang:'auto',rate:1,hd:true,vname:'Leda'};
 let S={...D};try{S={...D,...JSON.parse(localStorage.getItem('unsent')||'{}')}}catch(e){}
 const save=()=>{try{localStorage.setItem('unsent',JSON.stringify(S))}catch(e){}};
 let hist=[],busy=false,again=false,idleT,nudges=0,peak='',cur='chill';
@@ -161,7 +163,17 @@ function vnote(){
   if(!TTS){el.textContent='This browser has no voice support';return}
   el.textContent=(k!=='auto'&&voices.length&&!findVoice(TTSL[k][1]))?'No '+TTSL[k][0]+' voice on this phone. Add it in phone Settings > Text-to-speech':'';
 }
-function stopSpeak(){if(TTS)speechSynthesis.cancel()}
+const TTS_API=API.replace(/\/api\/chat$/,'/api/tts');let au=null,gen=0;
+function stopSpeak(){gen++;if(au){au.pause();au=null}if(TTS)speechSynthesis.cancel()}
+async function playHD(text){
+  const id=++gen,clean=text.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu,'').trim();if(!clean)return;
+  try{
+    const r=await fetch(TTS_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:clean,voice:S.vname,mood:cur})});
+    if(!r.ok)throw 0;
+    const b=await r.blob();if(id!==gen)return;
+    if(au)au.pause();au=new Audio(URL.createObjectURL(b));au.playbackRate=S.rate;await au.play();
+  }catch(e){if(id===gen&&S.tts){if(TTS)speechSynthesis.cancel();speak(text,1)}}
+}
 function speak(t,force){
   if(!TTS||(!S.tts&&!force))return;
   t=t.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu,'').trim();if(!t)return;
@@ -172,12 +184,17 @@ function speak(t,force){
 }
 const sel=$('#s-lang');for(const k in TTSL){const o=document.createElement('option');o.value=k;o.textContent=TTSL[k][0];sel.appendChild(o)}
 function syncTts(){$('#s-tts').checked=S.tts;$('#spk').innerHTML=S.tts?'&#128266;':'&#128263;'}
+const vsel=$('#s-vn');for(const [n,d] of [['Leda','Leda - youthful'],['Zephyr','Zephyr - bright'],['Puck','Puck - upbeat'],['Aoede','Aoede - breezy'],['Kore','Kore - firm'],['Fenrir','Fenrir - excitable'],['Charon','Charon - deep'],['Orus','Orus - firm']]){const o=document.createElement('option');o.value=n;o.textContent=d;vsel.appendChild(o)}
+vsel.value=S.vname;$('#s-hd').checked=S.hd;
+$('#s-hd').onchange=e=>{S.hd=e.target.checked;save()};
+vsel.onchange=e=>{S.vname=e.target.value;save();testV()};
 sel.value=S.lang;$('#s-rate').value=S.rate;$('#rv').textContent=S.rate;syncTts();vnote();
 $('#s-tts').onchange=e=>{S.tts=e.target.checked;save();syncTts();if(!S.tts)stopSpeak()};
-$('#spk').onclick=()=>{S.tts=!S.tts;save();syncTts();if(S.tts)speak('voice on',1);else stopSpeak()};
+$('#spk').onclick=()=>{S.tts=!S.tts;save();syncTts();if(S.tts)testV();else stopSpeak()};
 sel.onchange=e=>{S.lang=e.target.value;save();vnote()};
 $('#s-rate').oninput=e=>{S.rate=+e.target.value;$('#rv').textContent=S.rate;save()};
-$('#tv').onclick=()=>{stopSpeak();const k=S.lang==='auto'?'en':S.lang;const code=TTSL[k][1],u=new SpeechSynthesisUtterance(TTSL[k][2]);u.lang=code;const v=findVoice(code);if(v)u.voice=v;u.rate=S.rate;if(TTS)speechSynthesis.speak(u)};
+const testV=()=>{stopSpeak();if(S.hd)playHD('hey, this is Nyx. how do I sound?');else{const k=S.lang==='auto'?'en':S.lang;speak(TTSL[k][2],1)}};
+$('#tv').onclick=testV;
 const setOpen=o=>B.classList.toggle('open',o);
 $('#clr').onclick=()=>{stopSpeak();feed.textContent='';hist=[];nudges=0;peak='';setOpen(false);if(!busy)ask('hello')};
 $('#menu').onclick=()=>setOpen(true);$('#sc').onclick=()=>setOpen(false);
@@ -208,8 +225,8 @@ function buzz(){if(S.vib&&navigator.vibrate)navigator.vibrate(cur==='mad'?[25,15
 
 async function ask(mode,draft){
   busy=true;stat.textContent='typing...';typing(true);
-  let n=0,buf='';
-  const show=async m=>{if(n){typing(true);await sleep(120+m.length*4)}typing(false);add(m,'ai');buzz();speak(m);hist.push({role:'ai',text:m});n++};
+  let n=0,buf='';const said=[];
+  const show=async m=>{if(n){typing(true);await sleep(120+m.length*4)}typing(false);add(m,'ai');buzz();if(S.tts&&S.hd)said.push(m);else speak(m);hist.push({role:'ai',text:m});n++};
   const line=async l=>{l=l.trim();if(!l||l.startsWith('debug:'))return;if(l.startsWith('mood:')){mood(l.slice(5).trim());return}if(n<4)await show(l)};
   try{
     const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,history:hist.slice(-12),draft:draft||'',n:nudges,name:S.name})});
@@ -220,7 +237,7 @@ async function ask(mode,draft){
       await line(buf);
     }else{for(const l of (await r.text()).split('\n'))await line(l)}
   }catch(e){typing(false);add('Cannot reach the server ('+e.message+'). Check that your backend is deployed and the URL is right.','ai')}
-  typing(false);busy=false;stat.textContent='online';
+  typing(false);if(said.length)playHD(said.join(' '));busy=false;stat.textContent='online';
   if(again){again=false;ask('reply')}else armIdle();
 }
 function armIdle(){
@@ -239,7 +256,7 @@ inp.addEventListener('input',()=>{
   if(v.length===0){
     const d=peak.trim();peak='';
     if(d.length>=6&&S.drafts){
-      add(d,'ghost');
+      
       setTimeout(()=>{if(inp.value||busy)return;hist.push({role:'event',text:'user typed then deleted: "'+d+'"'});ask('draft',d)},2500);
     }
   }
