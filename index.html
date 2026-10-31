@@ -106,6 +106,7 @@ body.open #dr{transform:none}body.open #sc{opacity:1;pointer-events:auto}
 </head>
 <body>
 <div class="blob a"></div><div class="blob b"></div><div class="scl"></div>
+<div class="ov" id="blk" style="z-index:300;background:#140000"><div class="card" style="text-align:center;box-shadow:inset 0 0 0 1px #ff0000"><h2 style="color:#ff3b3b;font-size:20px">YOU'VE BEEN BLOCKED</h2><div class="tx" style="max-height:none;font-size:13px">Nyx has had enough. You pushed her to <b style="color:#ff3b3b">extreme anger</b>, so your access is blocked for <b style="color:#ff3b3b">1 hour</b>. Refreshing or closing the app won't change that.</div><div id="bk-t" style="font:700 36px var(--mono);color:#ff3b3b;margin:8px 0">60:00</div><div class="tx" style="max-height:none;font-size:11px">Come back when the timer ends. Be kind to Nyx next time.</div></div></div>
 <div class="ov" id="terms"><div class="card"><h2>Before you enter UNSENT</h2><div class="tx">
 <b>Nyx is an AI.</b> Nyx is not a real person, doctor, therapist or advisor. Don't rely on it for medical, legal or emergency help.<br><br>
 <b>What we store.</b> If you create an account we keep your email. Your chat history is saved in our database (Google Firebase) and linked to your account or guest ID so you can continue later. We also keep a daily message count to apply fair-use limits.<br><br>
@@ -162,7 +163,7 @@ By tapping OK you agree to these terms and this privacy policy, and confirm you 
 const API="https://unsent-backend-ten.vercel.app/api/chat";
 const $=s=>document.querySelector(s);
 const feed=$('#feed'),inp=$('#inp'),stat=$('#stat'),B=document.body;
-const MOOD={chill:['#9d6bff','calm','#22d3ee','✦',30],happy:['#22d3ee','happy','#a3e635','✨',70],mad:['#ff2a3d','anger','#ff8a00','🔥',95],sad:['#4d7cff','sadness','#7dd3fc','💧',55],love:['#ff4fd8','love','#ff9a9e','💖',85],shock:['#ffd60a','shock','#ff2a3d','⚡',90],smug:['#2ee6a0','smug','#9d6bff','😏',60]};
+const MOOD={chill:['#9d6bff','calm','#22d3ee','✦',30],happy:['#22d3ee','happy','#a3e635','✨',70],mad:['#ff2a3d','anger','#ff8a00','🔥',95],sad:['#4d7cff','sadness','#7dd3fc','💧',55],love:['#ff4fd8','love','#ff9a9e','💖',85],shock:['#ffd60a','shock','#ff2a3d','⚡',90],smug:['#2ee6a0','smug','#9d6bff','😏',60],rage:['#ff0000','RAGE','#7a0000','💢',100]};
 const lowEnd=(navigator.deviceMemory&&navigator.deviceMemory<=2)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2);
 const D={name:'',delay:20,drafts:true,fx:false,crazy:!lowEnd,vib:true,tts:false,lang:'auto',rate:1,hd:true,vname:'Leda'};
 let S={...D};try{S={...D,...JSON.parse(localStorage.getItem('unsent')||'{}')}}catch(e){}
@@ -172,6 +173,16 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const getTok=async()=>{try{return window.FB?await window.FB.token():''}catch(e){return ''}};
 let limited=false,left=null;
 function handleDeny(s){typing(false);if(s===429){limited=true;left=0;add('daily message limit reached'+((window.FB&&FB.guest)?'. create a free account for more, or come back tomorrow':'. come back tomorrow')+' 🥺','ai')}else add('please log in again','ai')}
+const BK='unsent_block',CP=location.pathname.replace(/[^/]*$/,'')||'/';
+function getBlock(){let t=0;try{t=+localStorage.getItem(BK)||0}catch(e){}const m=document.cookie.match(/(?:^|; )unsent_block=(\d+)/);if(m)t=Math.max(t,+m[1]);return t>Date.now()?t:0}
+function setBlock(t){try{localStorage.setItem(BK,String(t))}catch(e){}document.cookie='unsent_block='+t+'; max-age=7200; path='+CP+'; SameSite=Lax'}
+let blockT=null;
+function showBlock(until){
+  stopSpeak();clearTimeout(idleT);again=false;$('#blk').style.display='flex';
+  const tick=()=>{const s=Math.max(0,Math.ceil((until-Date.now())/1000));$('#bk-t').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');if(s<=0){clearInterval(blockT);location.reload()}};
+  tick();clearInterval(blockT);blockT=setInterval(tick,1000);
+}
+function blockUser(){const t=Date.now()+3600000;setBlock(t);showBlock(t)}
 function loadHist(m){hist=m.filter(x=>x&&(x.role==='user'||x.role==='ai')&&x.text).slice(-40);for(const x of hist.slice(-20))add(x.text,x.role==='user'?'me':'ai')}
 function getHist(){return hist.filter(x=>x.role==='user'||x.role==='ai').slice(-40).map(x=>({role:x.role,text:String(x.text).slice(0,500)}))}
 
@@ -254,7 +265,7 @@ function mood(m){
   const x=MOOD[m];if(!x)return;cur=m;
   const st=document.documentElement.style;st.setProperty('--m',x[0]);st.setProperty('--m2',x[2]);$('#lab').textContent=x[1];$('#mbi').style.width=x[4]+'%';
   burst($('.orb'),x[3],m==='chill'?3:7);
-  if(m==='mad'&&S.fx){B.classList.add('shake');setTimeout(()=>B.classList.remove('shake'),450)}
+  if((m==='mad'&&S.fx)||m==='rage'){B.classList.add('shake');setTimeout(()=>B.classList.remove('shake'),450)}
 }
 const down=()=>{feed.scrollTop=feed.scrollHeight};
 function typing(on){let t=$('#ty');if(on&&!t){t=document.createElement('div');t.id='ty';t.className='b ai ty';t.innerHTML='<i></i><i></i><i></i><i></i>';feed.appendChild(t);down()}else if(!on&&t)t.remove()}
@@ -262,10 +273,11 @@ function add(t,cls){const d=document.createElement('div');d.className='b '+cls;d
 function buzz(){if(S.vib&&navigator.vibrate)navigator.vibrate(cur==='mad'?[25,15,25]:10)}
 
 async function ask(mode,draft){
+  const bb=getBlock();if(bb){showBlock(bb);return}
   busy=true;stat.textContent='typing...';typing(true);
-  let n=0,buf='';const said=[];
+  let n=0,buf='',rage=false;const said=[];
   const show=async m=>{if(n){typing(true);await sleep(120+m.length*4)}typing(false);add(m,'ai');buzz();if(S.tts&&S.hd)said.push(m);else speak(m);hist.push({role:'ai',text:m});n++};
-  const line=async l=>{l=l.trim();if(!l||l.startsWith('debug:'))return;if(l.startsWith('mood:')){mood(l.slice(5).trim());return}if(n<4)await show(l)};
+  const line=async l=>{l=l.trim();if(!l||l.startsWith('debug:'))return;if(l.startsWith('mood:')){const m=l.slice(5).trim();mood(m);if(m==='rage')rage=true;return}if(n<4)await show(l)};
   try{
     const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+await getTok()},body:JSON.stringify({mode,history:hist.slice(-12),draft:draft||'',n:nudges,name:S.name})});
     const lf=r.headers.get('X-Left');if(lf!==null)left=lf;
@@ -278,6 +290,7 @@ async function ask(mode,draft){
     }else{for(const l of (await r.text()).split('\n'))await line(l)}
   }catch(e){typing(false);add('Cannot reach the server ('+e.message+'). Check that your backend is deployed and the URL is right.','ai')}
   typing(false);if(said.length)playHD(said.join(' '));busy=false;stat.textContent='online'+(left!==null?' · '+left+' left':'');if(window.saveHist)saveHist();
+  if(rage){again=false;setTimeout(blockUser,2500);return}
   if(again){again=false;ask('reply')}else armIdle();
 }
 function armIdle(){
@@ -306,12 +319,12 @@ async function boot(){
   for(const l of L){bt.textContent+=l+'\n';await sleep(260)}
   const b=$('#boot');b.style.opacity=0;await sleep(400);b.remove();ask('hello');
 }
+
+{const b0=getBlock();if(b0)showBlock(b0)}
 </script>
 
 <script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signInAnonymously,signOut,sendPasswordResetEmail,EmailAuthProvider,linkWithCredential,deleteUser}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import{getFirestore,doc,getDoc,setDoc,deleteDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const USE_FIREBASE=false; // set to true after Firebase Authentication and Firestore are set up
 const cfg={apiKey:"AIzaSyDZ_x5zcK1JbCwHZbLe2lIHG77RinqX3TA",authDomain:"unsent-5ae8c.firebaseapp.com",projectId:"unsent-5ae8c",appId:"1:635704448610:web:6e9cda585f4774c147a33b"};
 const q=s=>document.querySelector(s),show=(s,on)=>q(s).style.display=on?'flex':'none';
 const TV='unsent_terms_v1';
@@ -320,7 +333,12 @@ const gate=()=>new Promise(r=>{if(accepted())return r();show('#terms',1);q('#tok
 (async()=>{
   await gate();
   q('#tok').onclick=()=>show('#terms',0);q('#ptl').onclick=()=>show('#terms',1);
+  if(!USE_FIREBASE){for(const s of ['#mkacc','#out','#del'])q(s).style.display='none';q('#acct').closest('.row').style.display='none';boot();return}
   if(cfg.apiKey.includes('PASTE')){show('#auth',1);q('#aerr').textContent='Firebase is not set up yet. Paste your Firebase config into index.html.';return}
+  const V='https://www.gstatic.com/firebasejs/10.12.2/';
+  const{initializeApp}=await import(V+'firebase-app.js');
+  const{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signInAnonymously,signOut,sendPasswordResetEmail,EmailAuthProvider,linkWithCredential,deleteUser}=await import(V+'firebase-auth.js');
+  const{getFirestore,doc,getDoc,setDoc,deleteDoc,serverTimestamp}=await import(V+'firebase-firestore.js');
   const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
   let mode='in',started=false;
   const setMode=m=>{mode=m;q('#t1').className=m==='in'?'on':'';q('#t2').className=m==='up'?'on':'';q('#go').textContent=m==='in'?'Log in':'Create account';q('#pw').autocomplete=m==='in'?'current-password':'new-password';q('#aerr').textContent=''};
